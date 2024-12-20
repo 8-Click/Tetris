@@ -5,6 +5,8 @@ let fallSpeed = 1; // Speed in grid cells per second
 let lastFallTime = 0; // Last time a tetrimino fell down
 let dasDelay = 16; // Delay for initial move
 let dasSpeed = 6; // Speed for regular moves after DAS delay
+let wiggleRoom = 6; // Frames before transitioning to the next piece
+let wiggleTimer = 0; // Timer for wiggle room
 
 const pieces = { // Shapes for all tetriminoes
   T: [
@@ -39,7 +41,10 @@ const pieces = { // Shapes for all tetriminoes
 let piecesOnBoard = []; // Array for all pieces on the board
 let currentPiece = null; // Current piece being controlled
 let dasTimer = 0; // Timer for DAS delay
+let dasRepeatTimer = 0; // Timer for DAS repeat speed
 let direction = 0; // Direction to move (1 for right, -1 for left)
+let softDropTimer = 0; // Timer for soft drop speed
+let softDropActive = false; // Flag for active soft drop
 
 function setup() {
   createCanvas(displayWidth, displayHeight);
@@ -55,7 +60,8 @@ function draw() {
   drawAllPieces();
   handleGravity();
   handleDAS();
-} // test
+  handleSoftDrop();
+}
 
 function drawField() {
   for (let i = 0; i < 10; i++) {
@@ -102,6 +108,8 @@ function spawnPiece() {
 
   currentPiece = newPiece; // Keeps track of the current piece
   piecesOnBoard.push(newPiece); // Adds the piece to the board
+  softDropActive = false; // Reset soft drop flag
+  wiggleTimer = 0; // Reset wiggle timer
 }
 
 function handleGravity() {
@@ -121,17 +129,28 @@ function movePieceDown() {
     // Checks for collisions or if it hits the bottom
     if (checkCollision(currentPiece)) {
       currentPiece.y--; // Stops it at the bottom if it hits
-      currentPiece = null; // Stops tracking the piece
-      spawnPiece(); // Spawns a new piece
+
+      // Allow wiggle room before locking the piece
+      if (wiggleTimer >= wiggleRoom) {
+        currentPiece = null; // Stops tracking the piece
+        spawnPiece(); // Spawns a new piece
+      } else {
+        wiggleTimer++; // Increment wiggle timer
+      }
+    } else {
+      wiggleTimer = 0; // Reset wiggle timer if the piece moves
     }
   }
 }
 
 function checkCollision(piece) {
+  if (!piece || !piece.piece) return true; // If the piece is invalid, assume collision
   const { x, y } = piece;
   for (let row = 0; row < piece.piece.length; row++) {
-    for (let col = 0; col < piece.piece[row].length; col++) {
-      if (piece.piece[row][col] === 1) {
+    const rowArray = piece.piece[row];
+    if (!rowArray) continue; // Skip undefined rows
+    for (let col = 0; col < rowArray.length; col++) {
+      if (rowArray[col] === 1) {
         const newY = y + row;
         const newX = x + col;
 
@@ -143,11 +162,13 @@ function checkCollision(piece) {
         // Check other pieces
         for (let i = 0; i < piecesOnBoard.length; i++) {
           const p = piecesOnBoard[i];
-          if (p !== piece) {
+          if (p !== piece && p.piece) {
             for (let pr = 0; pr < p.piece.length; pr++) {
-              for (let pc = 0; pc < p.piece[pr].length; pc++) {
+              const pieceRow = p.piece[pr];
+              if (!pieceRow) continue; // Skip undefined rows
+              for (let pc = 0; pc < pieceRow.length; pc++) {
                 if (
-                  p.piece[pr][pc] === 1 &&
+                  pieceRow[pc] === 1 &&
                   p.x + pc === newX &&
                   p.y + pr === newY
                 ) {
@@ -165,28 +186,59 @@ function checkCollision(piece) {
 
 function handleDAS() {
   if (keyIsDown(65)) { // 'A' for left movement
-    dasTimer++;
-    if (dasTimer < dasDelay) {
-      direction = -1; // Move left immediately
+    if (dasTimer === 0) {
+      // Initial move
+      moveCurrentPiece(-1);
+      dasTimer++;
+    } else if (dasTimer >= dasDelay) {
+      dasRepeatTimer++;
+      if (dasRepeatTimer >= dasSpeed) {
+        moveCurrentPiece(-1);
+        dasRepeatTimer = 0; // Reset DAS repeat timer
+      }
     } else {
-      direction = -1;
+      dasTimer++;
     }
   } else if (keyIsDown(68)) { // 'D' for right movement
-    dasTimer++;
-    if (dasTimer < dasDelay) {
-      direction = 1; // Move right immediately
+    if (dasTimer === 0) {
+      // Initial move
+      moveCurrentPiece(1);
+      dasTimer++;
+    } else if (dasTimer >= dasDelay) {
+      dasRepeatTimer++;
+      if (dasRepeatTimer >= dasSpeed) {
+        moveCurrentPiece(1);
+        dasRepeatTimer = 0; // Reset DAS repeat timer
+      }
     } else {
-      direction = 1;
+      dasTimer++;
     }
   } else {
     dasTimer = 0; // Reset DAS timer if no key is held down
+    dasRepeatTimer = 0; // Reset repeat timer as well
     direction = 0;
   }
+}
 
-  if (currentPiece && direction !== 0) {
-    currentPiece.x += direction; // Move piece left or right
+function handleSoftDrop() {
+  if (keyIsDown(83)) { // 'S' for soft drop
+    softDropTimer++;
+    softDropActive = true; // Activate soft drop
+    if (softDropTimer >= 2) { // Drop every 2 frames
+      movePieceDown();
+      softDropTimer = 0;
+    }
+  } else {
+    softDropTimer = 0; // Reset soft drop timer if key is released
+    softDropActive = false; // Deactivate soft drop
+  }
+}
+
+function moveCurrentPiece(dx) {
+  if (currentPiece) {
+    currentPiece.x += dx;
     if (checkCollision(currentPiece)) {
-      currentPiece.x -= direction; // Undo the move if there's a collision
+      currentPiece.x -= dx; // Undo the move if there's a collision
     }
   }
 }
