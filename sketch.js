@@ -1,83 +1,152 @@
 const pixelSize = 30;
-let fieldStartWidth;
-let fieldStartHeight;
+let fieldStartWidth, fieldStartHeight;
+
+// Speed control
 let frameCount = 0;
 let dasDelay = 16;
 let dasSpeed = 6;
+let canRotate = true;  // Limit rotation to once per keypress
 
+// Tetriminos
 const pieces = {
   T: [
-    [[0, 1, 0],
-     [1, 1, 1]],
-    [[1, 0],
-     [1, 1],
-     [1, 0]],
-    [[1, 1, 1],
-     [0, 1, 0]],
-    [[0, 1],
-     [1, 1],
-     [0, 1]]
+    [
+      [0, 1, 0, 0],
+      [1, 1, 1, 0],
+      [0, 0, 0, 0],
+      [0, 0, 0, 0]
+    ],
+    [
+      [0, 1, 0, 0],
+      [0, 1, 1, 0],
+      [0, 1, 0, 0],
+      [0, 0, 0, 0]
+    ],
+    [
+      [0, 0, 0, 0],
+      [1, 1, 1, 0],
+      [0, 1, 0, 0],
+      [0, 0, 0, 0]
+    ],
+    [
+      [0, 1, 0, 0],
+      [1, 1, 0, 0],
+      [0, 1, 0, 0],
+      [0, 0, 0, 0]
+    ]
   ],
   O: [
-    [[1, 1],
-     [1, 1]]
+    [
+      [1, 1, 0, 0],
+      [1, 1, 0, 0],
+      [0, 0, 0, 0],
+      [0, 0, 0, 0]
+    ]
   ],
   I: [
-    [[1, 1, 1, 1]],
-    [[1],
-     [1],
-     [1],
-     [1]]
+    [
+      [1, 1, 1, 1],
+      [0, 0, 0, 0],
+      [0, 0, 0, 0],
+      [0, 0, 0, 0]
+    ],
+    [
+      [0, 0, 1, 0],
+      [0, 0, 1, 0],
+      [0, 0, 1, 0],
+      [0, 0, 1, 0]
+    ]
   ],
   L: [
-    [[1, 0, 0],
-     [1, 1, 1]],
-    [[1, 1],
-     [1, 0],
-     [1, 0]],
-    [[1, 1, 1],
-     [0, 0, 1]],
-    [[0, 1],
-     [0, 1],
-     [1, 1]]
+    [
+      [1, 1, 1, 0],
+      [1, 0, 0, 0],
+      [0, 0, 0, 0],
+      [0, 0, 0, 0]
+    ],
+    [
+      [1, 1, 0, 0],
+      [0, 1, 0, 0],
+      [0, 1, 0, 0],
+      [0, 0, 0, 0]
+    ],
+    [
+      [0, 0, 1, 0],
+      [1, 1, 1, 0],
+      [0, 0, 0, 0],
+      [0, 0, 0, 0]
+    ],
+    [
+      [1, 0, 0, 0],
+      [1, 0, 0, 0],
+      [1, 1, 0, 0],
+      [0, 0, 0, 0]
+    ]
   ],
   J: [
-    [[0, 0, 1],
-     [1, 1, 1]],
-    [[1, 0],
-     [1, 0],
-     [1, 1]],
-    [[1, 1, 1],
-     [1, 0, 0]],
-    [[1, 1],
-     [0, 1],
-     [0, 1]]
+    [
+      [1, 1, 1, 0],
+      [0, 0, 1, 0],
+      [0, 0, 0, 0],
+      [0, 0, 0, 0]
+    ],
+    [
+      [0, 0, 1, 0],
+      [0, 0, 1, 0],
+      [0, 1, 1, 0],
+      [0, 0, 0, 0]
+    ],
+    [
+      [1, 0, 0, 0],
+      [1, 1, 1, 0],
+      [0, 0, 0, 0],
+      [0, 0, 0, 0]
+    ],
+    [
+      [1, 1, 0, 0],
+      [1, 0, 0, 0],
+      [1, 0, 0, 0],
+      [0, 0, 0, 0]
+    ]
   ],
   S: [
-    [[0, 1, 1],
-     [1, 1, 0]],
-    [[1, 0],
-     [1, 1],
-     [0, 1]]
+    [
+      [0, 0, 0, 0],
+      [0, 1, 1, 0],
+      [1, 1, 0, 0],
+      [0, 0, 0, 0]
+    ],
+    [
+      [0, 1, 0, 0],
+      [0, 1, 1, 0],
+      [0, 0, 1, 0],
+      [0, 0, 0, 0]
+    ]
   ],
   Z: [
-    [[1, 1, 0],
-     [0, 1, 1]],
-    [[0, 1],
-     [1, 1],
-     [1, 0]]
+    [
+      [0, 0, 0, 0],
+      [1, 1, 0, 0],
+      [0, 1, 1, 0],
+      [0, 0, 0, 0]
+    ],
+    [
+      [0, 0, 1, 0],
+      [0, 1, 1, 0],
+      [0, 1, 0, 0],
+      [0, 0, 0, 0]
+    ]
   ]
 };
 
 let piecesOnBoard = [];
 let currentPiece = null;
+let currentPieceName = null;
 let dasTimer = 0;
 let dasRepeatTimer = 0;
 let softDropTimer = 0;
-let softDropActive = false;
 let lockDelay = 3;
 let lockTimer = 0;
-let direction = 0;
 
 function setup() {
   createCanvas(displayWidth, displayHeight);
@@ -106,6 +175,26 @@ function drawField() {
   }
 }
 
+function spawnPiece() {
+  const pieceNames = Object.keys(pieces);
+  const pieceName = pieceNames[Math.floor(Math.random() * pieceNames.length)];
+  currentPiece = {
+    piece: pieces[pieceName][0],
+    x: pieceName === "I" ? 3 : 4,
+    y: 0
+  };
+  currentPieceName = pieceName;
+  lockTimer = 0;
+}
+
+function lockPiece() {
+  piecesOnBoard.push({ ...currentPiece });
+  clearFullLines();
+  currentPiece = null;
+  currentPieceName = null;
+  spawnPiece();
+}
+
 function drawPiece(piece, xOffset, yOffset) {
   for (let row = 0; row < piece.length; row++) {
     for (let col = 0; col < piece[row].length; col++) {
@@ -119,8 +208,7 @@ function drawPiece(piece, xOffset, yOffset) {
 }
 
 function drawAllPieces() {
-  for (let i = 0; i < piecesOnBoard.length; i++) {
-    const p = piecesOnBoard[i];
+  for (const p of piecesOnBoard) {
     drawPiece(p.piece, p.x, p.y);
   }
   if (currentPiece) {
@@ -128,26 +216,9 @@ function drawAllPieces() {
   }
 }
 
-function spawnPiece() {
-  const pieceNames = Object.keys(pieces);
-  const randomIndex = Math.floor(Math.random() * pieceNames.length);
-  const pieceName = pieceNames[randomIndex];
-  const newPiece = {
-    piece: pieces[pieceName][0],
-    x: 4,
-    y: 0
-  };
-  if (pieceName === "I") {
-    newPiece.x -= 1;
-  }
-  currentPiece = newPiece;
-  softDropActive = false;
-  lockTimer = 0;
-}
-
 function handleGravity() {
   frameCount++;
-  if (frameCount >= 3) {
+  if (frameCount >= 20) {
     movePieceDown();
     frameCount = 0;
   }
@@ -168,42 +239,15 @@ function movePieceDown() {
   }
 }
 
-function lockPiece() {
-  piecesOnBoard.push({ ...currentPiece });
-  currentPiece = null;
-  spawnPiece();
-}
-
 function checkCollision(piece) {
-  if (!piece || !piece.piece) return true;
   const { x, y } = piece;
   for (let row = 0; row < piece.piece.length; row++) {
-    const rowArray = piece.piece[row];
-    if (!rowArray) continue;
-    for (let col = 0; col < rowArray.length; col++) {
-      if (rowArray[col] === 1) {
-        const newY = y + row;
+    for (let col = 0; col < piece.piece[row].length; col++) {
+      if (piece.piece[row][col] === 1) {
         const newX = x + col;
-        if (newY >= 20 || newX < 0 || newX >= 10) {
+        const newY = y + row;
+        if (newY >= 20 || newX < 0 || newX >= 10 || piecesOnBoard.some(p => overlaps(p, newX, newY))) {
           return true;
-        }
-        for (let i = 0; i < piecesOnBoard.length; i++) {
-          const p = piecesOnBoard[i];
-          if (p !== piece && p.piece) {
-            for (let pr = 0; pr < p.piece.length; pr++) {
-              const pieceRow = p.piece[pr];
-              if (!pieceRow) continue;
-              for (let pc = 0; pc < pieceRow.length; pc++) {
-                if (
-                  pieceRow[pc] === 1 &&
-                  p.x + pc === newX &&
-                  p.y + pr === newY
-                ) {
-                  return true;
-                }
-              }
-            }
-          }
         }
       }
     }
@@ -211,94 +255,132 @@ function checkCollision(piece) {
   return false;
 }
 
+function overlaps(p, x, y) {
+  return p.piece.some((row, pr) => row.some((cell, pc) => cell && p.x + pc === x && p.y + pr === y));
+}
+
 function handleDAS() {
   if (currentPiece) {
-    if (keyIsDown(65)) {
-      if (dasTimer === 0) {
-        moveCurrentPiece(-1);
-        dasTimer++;
-      } else if (dasTimer >= dasDelay) {
-        dasRepeatTimer++;
-        if (dasRepeatTimer >= dasSpeed) {
-          moveCurrentPiece(-1);
-          dasRepeatTimer = 0;
-        }
-      } else {
-        dasTimer++;
-      }
-    } else if (keyIsDown(68)) {
-      if (dasTimer === 0) {
-        moveCurrentPiece(1);
-        dasTimer++;
-      } else if (dasTimer >= dasDelay) {
-        dasRepeatTimer++;
-        if (dasRepeatTimer >= dasSpeed) {
-          moveCurrentPiece(1);
-          dasRepeatTimer = 0;
-        }
-      } else {
-        dasTimer++;
-      }
-    } else {
-      dasTimer = 0;
-      dasRepeatTimer = 0;
-    }
+    if (keyIsDown(65)) moveWithDAS(-1);
+    else if (keyIsDown(68)) moveWithDAS(1);
+    else resetDAS();
   }
 }
 
+function moveWithDAS(dx) {
+  if (dasTimer === 0) moveCurrentPiece(dx);
+  else if (dasTimer >= dasDelay && dasRepeatTimer >= dasSpeed) {
+    moveCurrentPiece(dx);
+    dasRepeatTimer = 0;
+  }
+  dasTimer++;
+  dasRepeatTimer++;
+}
+
+function resetDAS() {
+  dasTimer = 0;
+  dasRepeatTimer = 0;
+}
+
 function handleSoftDrop() {
-  if (currentPiece) {
-    if (keyIsDown(83)) {
-      softDropTimer++;
-      softDropActive = true;
-      if (softDropTimer >= 2) {
-        movePieceDown();
-        softDropTimer = 0;
-      }
-    } else {
+  if (keyIsDown(83)) {
+    softDropTimer++;
+    if (softDropTimer >= 2) {
+      movePieceDown();
       softDropTimer = 0;
-      softDropActive = false;
     }
+  } else {
+    softDropTimer = 0;
   }
 }
 
 function handleRotation() {
-  if (keyIsDown(37)) {
-    rotatePiece(-1);
-  } else if (keyIsDown(39)) {
-    rotatePiece(1);
+  if (canRotate && (keyIsDown(79) || keyIsDown(73))) {
+    rotatePiece(keyIsDown(79) ? 1 : -1);
+    canRotate = false;
+  } else if (!keyIsDown(73) && !keyIsDown(79)) {
+    canRotate = true;
   }
 }
 
 function moveCurrentPiece(dx) {
-  if (currentPiece) {
-    currentPiece.x += dx;
-    if (checkCollision(currentPiece)) {
-      currentPiece.x -= dx;
-    }
+  currentPiece.x += dx;
+  if (checkCollision(currentPiece)) {
+    currentPiece.x -= dx;
   }
 }
 
 function rotatePiece(direction) {
-  if (currentPiece) {
-    const newPiece = {
-      piece: rotate(currentPiece.piece, direction),
-      x: currentPiece.x,
-      y: currentPiece.y
-    };
+  if (!currentPiece || !currentPieceName) return;
+
+  const rotations = pieces[currentPieceName];
+  const currentIndex = rotations.findIndex(rot => JSON.stringify(rot) === JSON.stringify(currentPiece.piece));
+  const newIndex = (currentIndex + direction + rotations.length) % rotations.length;
+  const newPiece = { piece: rotations[newIndex], x: currentPiece.x, y: currentPiece.y };
+
+  if (!checkCollision(newPiece)) {
+    currentPiece.piece = newPiece.piece;
+    currentPiece.x = newPiece.x;
+    currentPiece.y = newPiece.y;
+  } else {
+    // If collision happens, try adjusting the position towards the right side of the screen
+    if (direction === 1) {  // Clockwise rotation
+      newPiece.x = Math.min(newPiece.x + 1, 10 - newPiece.piece[0].length);  // Move right if possible
+    } else {  // Counter-clockwise rotation
+      newPiece.x = Math.max(newPiece.x - 1, 0);  // Move left if possible
+    }
+
+    // Try the new position after adjustment
     if (!checkCollision(newPiece)) {
       currentPiece.piece = newPiece.piece;
+      currentPiece.x = newPiece.x;
+      currentPiece.y = newPiece.y;
     }
   }
 }
 
-function rotate(piece, direction) {
-  const rotations = pieces[getPieceName(piece)];
-  const currentRotation = rotations.findIndex(rotation => JSON.stringify(rotation) === JSON.stringify(piece));
-  const newRotation = (currentRotation + direction + rotations.length) % rotations.length;
-  return rotations[newRotation];
+function clearFullLines() {
+  for (let y = 19; y >= 0; y--) {
+    if (isLineFull(y)) {
+      removeLine(y);
+      shiftLinesDown(y);
+      y++; // Recheck the same row after shifting
+    }
+  }
 }
 
-function getPieceName(piece) {
-  return Object.keys(pieces).find(key => pieces[key].some(rot => JSON.stringify(rot) === JSON.stringify(piece)));
+function isLineFull(y) {
+  for (let x = 0; x < 10; x++) {
+    if (!piecesOnBoard.some(p => isCellOccupied(p, x, y))) {
+      return false;
+    }
+  }
+  return true;
+}
+
+function isCellOccupied(p, x, y) {
+  return p.piece.some((row, pr) =>
+    row.some((cell, pc) => cell && p.x + pc === x && p.y + pr === y)
+  );
+}
+
+function removeLine(y) {
+  // Mark pieces to be removed from this line
+  piecesOnBoard.forEach(p => {
+    if (p.y === y) {
+      p.toRemove = true;
+    }
+  });
+}
+
+function shiftLinesDown(y) {
+  // Shift all pieces down after removing lines
+  piecesOnBoard.forEach(p => {
+    if (p.y < y && !p.toRemove) {
+      p.y++;
+    }
+  });
+
+  // Remove the marked pieces
+  piecesOnBoard = piecesOnBoard.filter(p => !p.toRemove);
 }
