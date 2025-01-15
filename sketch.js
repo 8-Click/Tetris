@@ -189,7 +189,6 @@ function spawnPiece() {
 
 function lockPiece() {
   piecesOnBoard.push({ ...currentPiece });
-  clearFullLines();
   currentPiece = null;
   currentPieceName = null;
   spawnPiece();
@@ -337,50 +336,4 @@ function rotatePiece(direction) {
       currentPiece.y = newPiece.y;
     }
   }
-}
-
-function clearFullLines() {
-  for (let y = 19; y >= 0; y--) {
-    if (isLineFull(y)) {
-      removeLine(y);
-      shiftLinesDown(y);
-      y++; // Recheck the same row after shifting
-    }
-  }
-}
-
-function isLineFull(y) {
-  for (let x = 0; x < 10; x++) {
-    if (!piecesOnBoard.some(p => isCellOccupied(p, x, y))) {
-      return false;
-    }
-  }
-  return true;
-}
-
-function isCellOccupied(p, x, y) {
-  return p.piece.some((row, pr) =>
-    row.some((cell, pc) => cell && p.x + pc === x && p.y + pr === y)
-  );
-}
-
-function removeLine(y) {
-  // Mark pieces to be removed from this line
-  piecesOnBoard.forEach(p => {
-    if (p.y === y) {
-      p.toRemove = true;
-    }
-  });
-}
-
-function shiftLinesDown(y) {
-  // Shift all pieces down after removing lines
-  piecesOnBoard.forEach(p => {
-    if (p.y < y && !p.toRemove) {
-      p.y++;
-    }
-  });
-
-  // Remove the marked pieces
-  piecesOnBoard = piecesOnBoard.filter(p => !p.toRemove);
 }
