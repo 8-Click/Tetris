@@ -134,6 +134,7 @@ const pieces = {
     ]
   ]
 };
+
 let piecesOnBoard = [];
 let currentPiece = null;
 let currentPieceName = null;
@@ -153,34 +154,29 @@ const pieceColors = {
   Z: [128, 128, 64]
 };
 
-let nextPieceName = null; // To store the next piece
+let nextPieceName = null; 
 let score = 0;
-let lineCounter = 0; // Tracks the number of lines cleared
-let highScore = 0; // Tracks the highest score achieved
-let levelCounter = 1; // Tracks the current level
-let gameOver = false;  // Track the game over state
-let restartButton;     // Button for restarting the game
-
-let bgImage; // Declare a variable to hold the background image
+let lineCounter = 0;
+let highScore = 0;
+let levelCounter = 1;
+let gameOver = false;
+let restartButton;
+let bgImage;
 
 function preload() {
-  // Load the background image
   bgImage = loadImage('https://t3.ftcdn.net/jpg/10/16/22/36/360_F_1016223626_pvT5bslZ454vp5MThbBkPucGZSVkemVy.jpg');
 }
-
 
 function setup() {
   createCanvas(displayWidth, displayHeight);
   fieldStartWidth = displayWidth / 3;
   fieldStartHeight = displayHeight / 10;
-  nextPieceName = getRandomPieceName(); // Initialize the next piece
+  nextPieceName = getRandomPieceName();
   spawnPiece();
-
-  // Create the Restart button
   restartButton = createButton('Try Again');
   restartButton.position(fieldStartWidth + pixelSize * 4, fieldStartHeight + pixelSize * 8);
   restartButton.mousePressed(restartGame);
-  restartButton.hide();  // Hide the button initially
+  restartButton.hide();
 }
 
 function draw() {
@@ -210,8 +206,6 @@ function drawGameOverScreen() {
   textSize(32);
   textAlign(CENTER, CENTER);
   text("GAME OVER", displayWidth / 2, displayHeight / 3);
-
-  // Show the "Try Again" button
   restartButton.show();
 }
 
@@ -289,14 +283,12 @@ function lockPiece() {
 
 
 function drawPiece(piece, xOffset, yOffset, pieceType, color) {
-  // Check if the color is white (or close to white)
   const isWhite = color[0] === 255 && color[1] === 255 && color[2] === 255;
-
   for (let row = 0; row < piece.length; row++) {
     for (let col = 0; col < piece[row].length; col++) {
       if (piece[row][col] === 1) {
-        fill(color[0], color[1], color[2]); // Use the stored color
-        stroke(isWhite ? 'black' : 'white'); // Set stroke to black if the piece is white
+        fill(color[0], color[1], color[2]);
+        stroke(isWhite ? 'black' : 'white');
         rect(fieldStartWidth + (xOffset + col) * pixelSize, fieldStartHeight + (yOffset + row) * pixelSize, pixelSize, pixelSize);
       }
     }
@@ -387,10 +379,9 @@ function handleSoftDrop() {
 }
 
 function getFallSpeed(level) {
-  // Set a base speed and scale it based on the level
-  const baseSpeed = 60; // Base speed for level 1 (1 frame per second)
-  const speedDecreasePerLevel = 4; // Speed will decrease by 3 per level
-  const newSpeed = Math.max(3, baseSpeed - (level - 1) * speedDecreasePerLevel); // Ensure that the speed doesn't go below 3 frames at level 18
+  const baseSpeed = 60;
+  const speedDecreasePerLevel = 4;
+  const newSpeed = Math.max(3, baseSpeed - (level - 1) * speedDecreasePerLevel);
   return newSpeed;
 }
 
@@ -398,11 +389,11 @@ function getFallSpeed(level) {
 
 function handleRotation() {
   if (canRotate) {
-    if (keyIsDown(79) || keyIsDown(38)) { // O or UP_ARROW
-      rotatePiece(1); // Clockwise rotation
+    if (keyIsDown(79) || keyIsDown(38)) {
+      rotatePiece(1);
       canRotate = false;
-    } else if (keyIsDown(73)) { // I
-      rotatePiece(-1); // Counterclockwise rotation
+    } else if (keyIsDown(73)) {
+      rotatePiece(-1);
       canRotate = false;
     }
   } else if (!keyIsDown(73) && !keyIsDown(79) && !keyIsDown(38)) {
@@ -441,31 +432,27 @@ function rotatePiece(direction) {
 }
 
 function clearFullLines() {
-  let linesCleared = 0; // Track how many lines were cleared
+  let linesCleared = 0;
 
   for (let y = 19; y >= 0; y--) {
     if (isLineFull(y)) {
       clearLine(y);
       linesCleared++;
-      y++; // Skip the next line since it just shifted down
+      y++;
     }
   }
 
-  // Update lineCounter
   lineCounter += linesCleared;
 
-  // Update score based on how many lines were cleared at once
   if (linesCleared > 0) {
     score += calculateScore(linesCleared);
     if (score > highScore) {
-      highScore = score; // Update high score if current score is higher
+      highScore = score; 
     }
   }
 
-  // Update levelCounter based on lines cleared
-  levelCounter = Math.floor(lineCounter / 10) + 1; // Increase level every 10 lines
+  levelCounter = Math.floor(lineCounter / 10) + 1;
 }
-
 
 function calculateScore(linesCleared) {
   switch (linesCleared) {
